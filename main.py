@@ -7,7 +7,7 @@ import random
 
 
 def main(config):
-    cudnn.benchmark = True
+    # cudnn.benchmark = True
     if config.model_type not in ['U_Net', 'R2U_Net', 'AttU_Net', 'R2AttU_Net']:
         print('ERROR!! model_type should be selected in U_Net/R2U_Net/AttU_Net/R2AttU_Net')
         print('Your input for model_type was %s' % config.model_type)
@@ -22,16 +22,16 @@ def main(config):
     if not os.path.exists(config.result_path):
         os.makedirs(config.result_path)
 
-    lr = random.random()*0.0005 + 0.0000005
-    augmentation_prob = random.random()*0.7
-    epoch = random.choice([100, 150, 200, 250])
-    decay_ratio = random.random()*0.8
-    decay_epoch = int(epoch*decay_ratio)
+    # lr = random.random()*0.0005 + 0.0000005
+    # augmentation_prob = random.random()*0.7
+    # epoch = random.choice([100, 150, 200, 250])
+    # decay_ratio = random.random()*0.8
+    # decay_epoch = int(epoch*decay_ratio)
 
-    config.augmentation_prob = augmentation_prob
-    config.num_epochs = epoch
-    config.lr = lr
-    config.num_epochs_decay = decay_epoch
+    # config.augmentation_prob = augmentation_prob
+    # config.num_epochs = epoch
+    # config.lr = lr
+    # config.num_epochs_decay = decay_epoch
 
     print(config)
 
@@ -75,13 +75,13 @@ if __name__ == '__main__':
     parser.add_argument('--img_ch', type=int, default=3)
     parser.add_argument('--output_ch', type=int, default=1)
     parser.add_argument('--num_epochs', type=int, default=100)
-    parser.add_argument('--num_epochs_decay', type=int, default=70)
+    parser.add_argument('--num_epochs_decay', type=int, default=9999)
     parser.add_argument('--batch_size', type=int, default=1)
     parser.add_argument('--num_workers', type=int, default=4)
-    parser.add_argument('--lr', type=float, default=0.0002)
+    parser.add_argument('--lr', type=float, default=0.0003)
     parser.add_argument('--beta1', type=float, default=0.5)        # momentum1 in Adam
     parser.add_argument('--beta2', type=float, default=0.999)      # momentum2 in Adam
-    parser.add_argument('--augmentation_prob', type=float, default=0.4)
+    parser.add_argument('--augmentation_prob', type=float, default=0.5)
 
     parser.add_argument('--log_step', type=int, default=1)
     parser.add_argument('--val_step', type=int, default=1)

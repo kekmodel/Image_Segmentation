@@ -1,4 +1,4 @@
-.vscode
+*.tar
 *.npz
 *.jpg
 *.JPG
@@ -10,6 +10,7 @@
 *.WEBP
 *.gif
 *.GIF
+.vscode/
 models/
 result/
 dataset/

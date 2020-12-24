@@ -5,7 +5,6 @@ import datetime
 import torch
 import torchvision
 from torch import optim
-from torch.autograd import Variable
 import torch.nn.functional as F
 from evaluation import *
 from network import U_Net, R2U_Net, AttU_Net, R2AttU_Net
@@ -64,8 +63,16 @@ class Solver(object):
         elif self.model_type == 'R2AttU_Net':
             self.unet = R2AttU_Net(img_ch=3, output_ch=1, t=self.t)
 
-        self.optimizer = optim.Adam(list(self.unet.parameters()),
-                                    self.lr, [self.beta1, self.beta2])
+        # self.optimizer = optim.Adam(list(self.unet.parameters()),
+        #                             self.lr, [self.beta1, self.beta2])
+        no_decay = ['bn', 'bias']
+        grouped_parameters = [
+            {'params': [p for n, p in self.unet.named_parameters() if not any(
+                nd in n for nd in no_decay)], 'weight_decay': 1e-2},
+            {'params': [p for n, p in self.unet.named_parameters() if any(
+                nd in n for nd in no_decay)], 'weight_decay': 0.0}
+        ]
+        self.optimizer = optim.AdamW(grouped_parameters, self.lr, eps=1e-6)
         self.unet.to(self.device)
 
         # self.print_network(self.unet, self.model_type)
