@@ -1,15 +1,19 @@
+import csv
 import os
-import numpy as np
 import time
 import datetime
+
+import numpy as np
 import torch
 import torchvision
 from torch import optim
 import torch.nn.functional as F
+import wandb
+from tqdm import tqdm
+
 from evaluation import *
 from network import U_Net, R2U_Net, AttU_Net, R2AttU_Net
-import csv
-from tqdm import tqdm
+from misc import get_cosine_schedule_with_warmup
 
 
 class Solver(object):
@@ -37,6 +41,8 @@ class Solver(object):
         self.num_epochs = config.num_epochs
         self.num_epochs_decay = config.num_epochs_decay
         self.batch_size = config.batch_size
+        self.num_total_steps = int(len(train_loader) * config.num_epochs)
+        self.warmup_steps = int(self.num_total_steps * config.warmup_rate)
 
         # Step size
         self.log_step = config.log_step
@@ -73,6 +79,8 @@ class Solver(object):
                 nd in n for nd in no_decay)], 'weight_decay': 0.0}
         ]
         self.optimizer = optim.AdamW(grouped_parameters, self.lr, eps=1e-6)
+        # self.scheduler = get_cosine_schedule_with_warmup(
+        #     self.optimizer, self.warmup_steps, self.num_total_steps)
         self.unet.to(self.device)
 
         # self.print_network(self.unet, self.model_type)
@@ -184,8 +192,9 @@ class Solver(object):
                 # Print the log info
                 print('Epoch [%d/%d], Loss: %.4f, \n[Training] Acc: %.4f, SE: %.4f, SP: %.4f, PC: %.4f, F1: %.4f, JS: %.4f, DC: %.4f' % (
                     epoch+1, self.num_epochs,
-                    epoch_loss,
+                    epoch_loss/(i+1),
                     acc, SE, SP, PC, F1, JS, DC))
+                wandb.log({"loss/train": epoch_loss/(i+1)})
 
                 # Decay learning rate
                 if (epoch+1) > (self.num_epochs - self.num_epochs_decay):

@@ -75,6 +75,7 @@ if __name__ == '__main__':
     parser.add_argument('--img_ch', type=int, default=3)
     parser.add_argument('--output_ch', type=int, default=1)
     parser.add_argument('--num_epochs', type=int, default=100)
+    parser.add_argument('--warmup_rate', type=int, default=0)
     parser.add_argument('--num_epochs_decay', type=int, default=9999)
     parser.add_argument('--batch_size', type=int, default=1)
     parser.add_argument('--num_workers', type=int, default=4)
