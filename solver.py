@@ -40,7 +40,7 @@ class Solver(object):
 
         # Training settings
         self.num_epochs = config.num_epochs
-        self.num_epochs_decay = config.num_epochs_decay
+        # self.num_epochs_decay = config.num_epochs_decay
         self.batch_size = config.batch_size
         self.num_total_steps = int(len(train_loader) * config.num_epochs)
         self.warmup_steps = int(self.num_total_steps * config.warmup_rate)
@@ -123,10 +123,9 @@ class Solver(object):
         #====================================== Training ===========================================#
         #===========================================================================================#
 
-        unet_path = os.path.join(self.model_path, '%s-%d-%.4f-%d-%.4f.pkl' % (self.model_type,
+        unet_path = os.path.join(self.model_path, '%s-%d-%.4f-%.4f.pkl' % (self.model_type,
                                                                               self.num_epochs, 
                                                                               self.lr, 
-                                                                              self.num_epochs_decay, 
                                                                               self.augmentation_prob))
 
         # U-Net Train
@@ -207,11 +206,11 @@ class Solver(object):
                            "train/dice": DC})
                 
                 # Decay learning rate
-                if (epoch+1) > (self.num_epochs - self.num_epochs_decay):
-                    lr -= (self.lr / float(self.num_epochs_decay))
-                    for param_group in self.optimizer.param_groups:
-                        param_group['lr'] = lr
-                    print('Decay learning rate to lr: {}.'.format(lr))
+                # if (epoch+1) > (self.num_epochs - self.num_epochs_decay):
+                #     lr -= (self.lr / float(self.num_epochs_decay))
+                #     for param_group in self.optimizer.param_groups:
+                #         param_group['lr'] = lr
+                #     print('Decay learning rate to lr: {}.'.format(lr))
 
                 #===================================== Validation ====================================#
                 # self.unet.train(False)
@@ -320,11 +319,10 @@ class Solver(object):
             DC = DC/length
             unet_score = JS + DC
 
-            f = open(os.path.join(self.result_path, 'result.csv'),
-                     'a', encoding='utf-8', newline='')
+            f = open(os.path.join(self.result_path, 'result.csv'), 'a', encoding='utf-8', newline='')
             wr = csv.writer(f)
             wr.writerow([self.model_type, acc, SE, SP, PC, F1, JS, DC, self.lr, best_epoch,
-                         self.num_epochs, self.num_epochs_decay, self.augmentation_prob])
+                         self.num_epochs, self.augmentation_prob])
             f.close()
             wandb.log({"test/acc": acc,
                        "test/sens": SE,
