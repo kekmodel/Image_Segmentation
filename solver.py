@@ -172,7 +172,7 @@ class Solver(object):
                     self.reset_grad()
                     loss.backward()
                     self.optimizer.step()
-                    self.scheduler.step()
+                    # self.scheduler.step()
 
                     acc += get_accuracy(SR, GT)
                     SE += get_sensitivity(SR, GT)
