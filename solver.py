@@ -72,7 +72,7 @@ class Solver(object):
 
         # self.optimizer = optim.Adam(list(self.unet.parameters()),
         #                             self.lr, [self.beta1, self.beta2])
-        print([n for n, p in self.unet.named_parameters()])
+        # print([n for n, p in self.unet.named_parameters()])
         no_decay = ['bn', 'bias']
         grouped_parameters = [
             {'params': [p for n, p in self.unet.named_parameters() if not any(
