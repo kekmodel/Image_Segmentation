@@ -161,7 +161,7 @@ class Solver(object):
 
                     # SR : Segmentation Result
                     SR = self.unet(images)
-                    SR_probs = F.sigmoid(SR)
+                    SR_probs = torch.sigmoid(SR)
                     SR_flat = SR_probs.view(SR_probs.size(0), -1)
 
                     GT_flat = GT.view(GT.size(0), -1)
@@ -230,7 +230,7 @@ class Solver(object):
 
                     images = images.to(self.device)
                     GT = GT.to(self.device)
-                    SR = F.sigmoid(self.unet(images))
+                    SR = torch.sigmoid(self.unet(images))
                     acc += get_accuracy(SR, GT)
                     SE += get_sensitivity(SR, GT)
                     SP += get_specificity(SR, GT)
@@ -301,7 +301,7 @@ class Solver(object):
 
                 images = images.to(self.device)
                 GT = GT.to(self.device)
-                SR = F.sigmoid(self.unet(images))
+                SR = torch.sigmoid(self.unet(images))
                 acc += get_accuracy(SR, GT)
                 SE += get_sensitivity(SR, GT)
                 SP += get_specificity(SR, GT)

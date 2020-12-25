@@ -125,16 +125,17 @@ class Attention_block(nn.Module):
         self.psi_conv = nn.Conv2d(F_int, 1, kernel_size=1, stride=1, padding=0, bias=True)
         self.psi_bn = nn.BatchNorm2d(1)
         self.relu = nn.ReLU(inplace=True)
+        self.sigmoid = nn.Sigmoid()
 
     def forward(self, g, x):
-        g = self.W_g_conv(g)
-        g1 = self.W_g_bn(g)
-        x = self.W_x_conv(x)
-        x1 = self.W_x_bn(x)
+        g1 = self.W_g_conv(g)
+        g1 = self.W_g_bn(g1)
+        x1 = self.W_x_conv(x)
+        x1 = self.W_x_bn(x1)
         psi = self.relu(g1+x1)
         psi = self.psi_conv(psi)
         psi = self.psi_bn(psi)
-        psi = torch.sigmoid(psi)
+        psi = self.sigmoid(psi)
         return x*psi
 
 
