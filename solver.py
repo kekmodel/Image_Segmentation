@@ -156,9 +156,9 @@ class Solver(object):
 
             for epoch in range(self.num_epochs):
 
-                self.unet.eval()
+                # self.unet.eval()
+                self.unet.train()
                 epoch_loss = 0
-
                 acc = 0.  # Accuracy
                 SE = 0.		# Sensitivity (Recall)
                 SP = 0.		# Specificity
