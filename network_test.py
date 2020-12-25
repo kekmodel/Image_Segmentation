@@ -76,14 +76,14 @@ class Recurrent_block(nn.Module):
     def forward(self, x):
         for i in range(self.t):
             if i == 0:
-                x = self.conv(x)
-                x = self.bn(x)
-                x1 = self.relu(x)
+                out = self.conv(x)
+                out = self.bn(out)
+                out = self.relu(out)
 
-            x = self.conv(x+x1)
-            x = self.bn(x)
-            x1 = self.relu(x)
-        return x1
+            out = self.conv(x+out)
+            out = self.bn(out)
+            out = self.relu(out)
+        return out
 
 
 class RRCNN_block(nn.Module):
