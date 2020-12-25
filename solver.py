@@ -7,6 +7,7 @@ import numpy as np
 import torch
 import torchvision
 from torch import optim
+from torch.optim import lr_scheduler
 import torch.nn.functional as F
 import wandb
 from tqdm import tqdm
@@ -81,8 +82,9 @@ class Solver(object):
                 nd in n for nd in no_decay)], 'weight_decay': 0.0}
         ]
         self.optimizer = optim.AdamW(grouped_parameters, self.lr, eps=1e-6)
-        self.scheduler = get_cosine_schedule_with_warmup(
-            self.optimizer, self.warmup_steps, self.num_total_steps)
+        # self.scheduler = get_cosine_schedule_with_warmup(
+        #     self.optimizer, self.warmup_steps, self.num_total_steps)
+        self.scheduler = lr_scheduler.ReduceLROnPlateau(self.optimizer, factor=0.1, patience=20, verbose=True)
         self.unet.to(self.device)
         wandb.watch(self.unet)
         # self.print_network(self.unet, self.model_type)
@@ -217,7 +219,77 @@ class Solver(object):
                 #===================================== Validation ====================================#
                 # self.unet.train(False)
                 self.unet.eval()
+                with torch.no_grad():
+                    acc = 0.  # Accuracy
+                    SE = 0.		# Sensitivity (Recall)
+                    SP = 0.		# Specificity
+                    PC = 0. 	# Precision
+                    F1 = 0.		# F1 Score
+                    JS = 0.		# Jaccard Similarity
+                    DC = 0.		# Dice Coefficient
+                    length = 0
+                    for i, (images, GT) in enumerate(self.valid_loader):
+                        images = images.to(self.device)
+                        GT = GT.to(self.device)
+                        SR = torch.sigmoid(self.unet(images))
+                        acc += get_accuracy(SR, GT)
+                        SE += get_sensitivity(SR, GT)
+                        SP += get_specificity(SR, GT)
+                        PC += get_precision(SR, GT)
+                        F1 += get_F1(SR, GT)
+                        JS += get_JS(SR, GT)
+                        DC += get_DC(SR, GT)
 
+                        length += images.size(0)
+
+                    acc = acc/length
+                    SE = SE/length
+                    SP = SP/length
+                    PC = PC/length
+                    F1 = F1/length
+                    JS = JS/length
+                    DC = DC/length
+                    unet_score = DC
+                    self.scheduler.step(unet_score)
+
+                    print('[Validation] Acc: %.4f, SE: %.4f, SP: %.4f, PC: %.4f, F1: %.4f, JS: %.4f, DC: %.4f' % (
+                        acc, SE, SP, PC, F1, JS, DC))
+                    wandb.log({"val/acc": acc,
+                            "val/sens": SE,
+                            "val/spec": SP,
+                            "val/prec": PC,
+                            "val/f1": F1,
+                            "val/jacc": JS,
+                            "val/dice": DC})
+
+                    '''
+                    torchvision.utils.save_image(images.data.cpu(),
+                                                os.path.join(self.result_path,
+                                                            '%s_valid_%d_image.png'%(self.model_type,epoch+1)))
+                    torchvision.utils.save_image(SR.data.cpu(),
+                                                os.path.join(self.result_path,
+                                                            '%s_valid_%d_SR.png'%(self.model_type,epoch+1)))
+                    torchvision.utils.save_image(GT.data.cpu(),
+                                                os.path.join(self.result_path,
+                                                            '%s_valid_%d_GT.png'%(self.model_type,epoch+1)))
+                    '''
+
+                    # Save Best U-Net model
+                    if unet_score > best_unet_score:
+                        best_unet_score = unet_score
+                        best_epoch = epoch
+                        best_unet = self.unet.state_dict()
+                        print('Best %s model score : %.4f' % (self.model_type, best_unet_score))
+                        torch.save(best_unet, unet_path)
+
+            #===================================== Test ====================================#
+            del self.unet
+            del best_unet
+            self.build_model()
+            self.unet.load_state_dict(torch.load(unet_path))
+
+            self.unet.eval()
+            with torch.no_grad()
                 acc = 0.  # Accuracy
                 SE = 0.		# Sensitivity (Recall)
                 SP = 0.		# Specificity
@@ -248,88 +320,17 @@ class Solver(object):
                 F1 = F1/length
                 JS = JS/length
                 DC = DC/length
-                unet_score = JS + DC
+                unet_score = DC
 
-                print('[Validation] Acc: %.4f, SE: %.4f, SP: %.4f, PC: %.4f, F1: %.4f, JS: %.4f, DC: %.4f' % (
-                    acc, SE, SP, PC, F1, JS, DC))
-                wandb.log({"val/acc": acc,
-                           "val/sens": SE,
-                           "val/spec": SP,
-                           "val/prec": PC,
-                           "val/f1": F1,
-                           "val/jacc": JS,
-                           "val/dice": DC})
-
-                '''
-				torchvision.utils.save_image(images.data.cpu(),
-											os.path.join(self.result_path,
-														'%s_valid_%d_image.png'%(self.model_type,epoch+1)))
-				torchvision.utils.save_image(SR.data.cpu(),
-											os.path.join(self.result_path,
-														'%s_valid_%d_SR.png'%(self.model_type,epoch+1)))
-				torchvision.utils.save_image(GT.data.cpu(),
-											os.path.join(self.result_path,
-														'%s_valid_%d_GT.png'%(self.model_type,epoch+1)))
-				'''
-
-                # Save Best U-Net model
-                if unet_score > best_unet_score:
-                    best_unet_score = unet_score
-                    best_epoch = epoch
-                    best_unet = self.unet.state_dict()
-                    print('Best %s model score : %.4f' % (self.model_type, best_unet_score))
-                    torch.save(best_unet, unet_path)
-
-            #===================================== Test ====================================#
-            del self.unet
-            del best_unet
-            self.build_model()
-            self.unet.load_state_dict(torch.load(unet_path))
-
-            self.unet.train(False)
-            self.unet.eval()
-
-            acc = 0.  # Accuracy
-            SE = 0.		# Sensitivity (Recall)
-            SP = 0.		# Specificity
-            PC = 0. 	# Precision
-            F1 = 0.		# F1 Score
-            JS = 0.		# Jaccard Similarity
-            DC = 0.		# Dice Coefficient
-            length = 0
-            for i, (images, GT) in enumerate(self.valid_loader):
-
-                images = images.to(self.device)
-                GT = GT.to(self.device)
-                SR = torch.sigmoid(self.unet(images))
-                acc += get_accuracy(SR, GT)
-                SE += get_sensitivity(SR, GT)
-                SP += get_specificity(SR, GT)
-                PC += get_precision(SR, GT)
-                F1 += get_F1(SR, GT)
-                JS += get_JS(SR, GT)
-                DC += get_DC(SR, GT)
-
-                length += images.size(0)
-
-            acc = acc/length
-            SE = SE/length
-            SP = SP/length
-            PC = PC/length
-            F1 = F1/length
-            JS = JS/length
-            DC = DC/length
-            unet_score = JS + DC
-
-            f = open(os.path.join(self.result_path, 'result.csv'), 'a', encoding='utf-8', newline='')
-            wr = csv.writer(f)
-            wr.writerow([self.model_type, acc, SE, SP, PC, F1, JS, DC, self.lr, best_epoch,
-                         self.num_epochs, self.augmentation_prob])
-            f.close()
-            wandb.log({"test/acc": acc,
-                       "test/sens": SE,
-                       "test/spec": SP,
-                       "test/prec": PC,
-                       "test/f1": F1,
-                       "test/jacc": JS,
-                       "test/dice": DC})
+                f = open(os.path.join(self.result_path, 'result.csv'), 'a', encoding='utf-8', newline='')
+                wr = csv.writer(f)
+                wr.writerow([self.model_type, acc, SE, SP, PC, F1, JS, DC, self.lr, best_epoch,
+                            self.num_epochs, self.augmentation_prob])
+                f.close()
+                wandb.log({"test/acc": acc,
+                        "test/sens": SE,
+                        "test/spec": SP,
+                        "test/prec": PC,
+                        "test/f1": F1,
+                        "test/jacc": JS,
+                        "test/dice": DC})
