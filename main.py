@@ -4,10 +4,18 @@ from solver import Solver
 from data_loader import get_loader
 from torch.backends import cudnn
 import random
+import numpy as np
+import random
+import torch
 
 
 def main(config):
     # cudnn.benchmark = True
+    random.seed(config.seed)
+    np.random.seed(config.seed)
+    torch.manual_seed(config.seed)
+    torch.cuda.manual_seed_all(config.seed)
+    
     if config.model_type not in ['U_Net', 'R2U_Net', 'AttU_Net', 'R2AttU_Net']:
         print('ERROR!! model_type should be selected in U_Net/R2U_Net/AttU_Net/R2AttU_Net')
         print('Your input for model_type was %s' % config.model_type)
@@ -72,12 +80,13 @@ if __name__ == '__main__':
                         help='t for Recurrent step of R2U_Net or R2AttU_Net')
 
     # training hyper-parameters
+    parser.add_argument('--seed', type=int, default=None)
     parser.add_argument('--img_ch', type=int, default=3)
     parser.add_argument('--output_ch', type=int, default=1)
     parser.add_argument('--num_epochs', type=int, default=100)
     parser.add_argument('--warmup_rate', type=int, default=0)
     parser.add_argument('--name', type=str, default='test')
-    # parser.add_argument('--num_epochs_decay', type=int, default=9999)
+    # parser.add_argument('--num_epochs_decay', type=int, default=70)
     parser.add_argument('--batch_size', type=int, default=1)
     parser.add_argument('--num_workers', type=int, default=4)
     parser.add_argument('--lr', type=float, default=0.0003)
