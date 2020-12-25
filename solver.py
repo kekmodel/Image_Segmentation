@@ -119,6 +119,11 @@ class Solver(object):
         img = (x[:, 0, :, :] > x[:, 1, :, :]).float()
         img = img*255
         return img
+    
+    def dice_loss(self, pred, target):
+        eps = 1e-6
+        dice = (2. * (pred * target).sum() + eps) / (y_true.sum() + y_pred.sum() + eps)
+        return 1. - dice
 
     def train(self):
         """Train encoder, generator and discriminator."""
@@ -167,7 +172,8 @@ class Solver(object):
                     SR_flat = SR_probs.view(SR_probs.size(0), -1)
 
                     GT_flat = GT.view(GT.size(0), -1)
-                    loss = self.criterion(SR_flat, GT_flat)
+                    # loss = self.criterion(SR_flat, GT_flat)
+                    loss = self.dice_loss(SR_flat, GT_flat)
                     epoch_loss += loss.item()
 
                     # Backprop + optimize
