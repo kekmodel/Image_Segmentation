@@ -12,7 +12,7 @@ import wandb
 from tqdm import tqdm
 
 from evaluation import *
-from network import U_Net, R2U_Net, AttU_Net, R2AttU_Net
+from network_test import U_Net, R2U_Net, AttU_Net, R2AttU_Net
 from misc import get_cosine_schedule_with_warmup
 
 
