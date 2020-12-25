@@ -122,7 +122,7 @@ class Solver(object):
     
     def dice_loss(self, pred, target):
         eps = 1e-6
-        dice = (2. * (pred * target).sum() + eps) / (y_true.sum() + y_pred.sum() + eps)
+        dice = (2. * (pred * target).sum() + eps) / (pred.sum() + target.sum() + eps)
         return 1. - dice
 
     def train(self):
