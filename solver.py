@@ -19,6 +19,7 @@ from misc import get_cosine_schedule_with_warmup
 class Solver(object):
     def __init__(self, config, train_loader, valid_loader, test_loader):
 
+        wandb.init(name=config.name, project="segmentation", config=config)
         # Data loader
         self.train_loader = train_loader
         self.valid_loader = valid_loader
@@ -82,7 +83,7 @@ class Solver(object):
         # self.scheduler = get_cosine_schedule_with_warmup(
         #     self.optimizer, self.warmup_steps, self.num_total_steps)
         self.unet.to(self.device)
-
+        wandb.watch(self.unet)
         # self.print_network(self.unet, self.model_type)
 
     def print_network(self, model, name):
@@ -100,19 +101,16 @@ class Solver(object):
             x = x.cpu()
         return x.data
 
-    def update_lr(self, g_lr, d_lr):
+    def update_lr(self, lr):
         for param_group in self.optimizer.param_groups:
             param_group['lr'] = lr
+    
+    def get_lr(self):
+        return self.optimizer.param_groups[0]['lr']
 
     def reset_grad(self):
         """Zero the gradient buffers."""
         self.unet.zero_grad()
-
-    def compute_accuracy(self, SR, GT):
-        SR_flat = SR.view(-1)
-        GT_flat = GT.view(-1)
-
-        acc = GT_flat.data.cpu() == (SR_flat.data.cpu() > 0.5)
 
     def tensor2img(self, x):
         img = (x[:, 0, :, :] > x[:, 1, :, :]).float()
@@ -126,7 +124,10 @@ class Solver(object):
         #===========================================================================================#
 
         unet_path = os.path.join(self.model_path, '%s-%d-%.4f-%d-%.4f.pkl' % (self.model_type,
-                                                                              self.num_epochs, self.lr, self.num_epochs_decay, self.augmentation_prob))
+                                                                              self.num_epochs, 
+                                                                              self.lr, 
+                                                                              self.num_epochs_decay, 
+                                                                              self.augmentation_prob))
 
         # U-Net Train
         if os.path.isfile(unet_path):
@@ -140,7 +141,7 @@ class Solver(object):
 
             for epoch in range(self.num_epochs):
 
-                self.unet.train(True)
+                self.unet.train()
                 epoch_loss = 0
 
                 acc = 0.  # Accuracy
@@ -180,6 +181,8 @@ class Solver(object):
                     JS += get_JS(SR, GT)
                     DC += get_DC(SR, GT)
                     length += images.size(0)
+                    wandb.log({"loss/step": loss.item(),
+                               "lr": self.get_lr()})
 
                 acc = acc/length
                 SE = SE/length
@@ -194,8 +197,15 @@ class Solver(object):
                     epoch+1, self.num_epochs,
                     epoch_loss/(i+1),
                     acc, SE, SP, PC, F1, JS, DC))
-                wandb.log({"loss/train": epoch_loss/(i+1)})
-
+                wandb.log({"loss/epoch": epoch_loss/(i+1),
+                           "train/acc": acc,
+                           "train/sens": SE,
+                           "train/spec": SP,
+                           "train/prec": PC,
+                           "train/f1": F1,
+                           "train/jacc": JS,
+                           "train/dice": DC})
+                
                 # Decay learning rate
                 if (epoch+1) > (self.num_epochs - self.num_epochs_decay):
                     lr -= (self.lr / float(self.num_epochs_decay))
@@ -241,6 +251,13 @@ class Solver(object):
 
                 print('[Validation] Acc: %.4f, SE: %.4f, SP: %.4f, PC: %.4f, F1: %.4f, JS: %.4f, DC: %.4f' % (
                     acc, SE, SP, PC, F1, JS, DC))
+                wandb.log({"val/acc": acc,
+                           "val/sens": SE,
+                           "val/spec": SP,
+                           "val/prec": PC,
+                           "val/f1": F1,
+                           "val/jacc": JS,
+                           "val/dice": DC})
 
                 '''
 				torchvision.utils.save_image(images.data.cpu(),
@@ -309,3 +326,10 @@ class Solver(object):
             wr.writerow([self.model_type, acc, SE, SP, PC, F1, JS, DC, self.lr, best_epoch,
                          self.num_epochs, self.num_epochs_decay, self.augmentation_prob])
             f.close()
+            wandb.log({"test/acc": acc,
+                       "test/sens": SE,
+                       "test/spec": SP,
+                       "test/prec": PC,
+                       "test/f1": F1,
+                       "test/jacc": JS,
+                       "test/dice": DC})
