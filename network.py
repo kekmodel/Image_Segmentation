@@ -211,7 +211,7 @@ class R2U_Net(nn.Module):
         super(R2U_Net, self).__init__()
 
         self.Maxpool = nn.MaxPool2d(kernel_size=2, stride=2)
-        self.Upsample = nn.Upsample(scale_factor=2)
+        # self.Upsample = nn.Upsample(scale_factor=2)
 
         self.RRCNN1 = RRCNN_block(ch_in=img_ch, ch_out=64, t=t)
 
@@ -352,7 +352,7 @@ class R2AttU_Net(nn.Module):
         super(R2AttU_Net, self).__init__()
 
         self.Maxpool = nn.MaxPool2d(kernel_size=2, stride=2)
-        self.Upsample = nn.Upsample(scale_factor=2)
+        # self.Upsample = nn.Upsample(scale_factor=2)
 
         self.RRCNN1 = RRCNN_block(ch_in=img_ch, ch_out=64, t=t)
 
