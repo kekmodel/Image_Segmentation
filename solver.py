@@ -72,6 +72,7 @@ class Solver(object):
 
         # self.optimizer = optim.Adam(list(self.unet.parameters()),
         #                             self.lr, [self.beta1, self.beta2])
+        print([n for n, p in self.unet.named_parameters()])
         no_decay = ['bn', 'bias']
         grouped_parameters = [
             {'params': [p for n, p in self.unet.named_parameters() if not any(
@@ -84,7 +85,7 @@ class Solver(object):
             self.optimizer, self.warmup_steps, self.num_total_steps)
         self.unet.to(self.device)
         wandb.watch(self.unet)
-        self.print_network(self.unet, self.model_type)
+        # self.print_network(self.unet, self.model_type)
 
     def print_network(self, model, name):
         """Print out the network information."""
