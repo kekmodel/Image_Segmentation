@@ -16,6 +16,8 @@ from evaluation import *
 from network_test import U_Net, R2U_Net, AttU_Net, R2AttU_Net
 from misc import get_cosine_schedule_with_warmup
 
+import segmentation_models_pytorch as smp
+
 
 class Solver(object):
     def __init__(self, config, train_loader, valid_loader, test_loader):
@@ -70,31 +72,36 @@ class Solver(object):
             self.unet = AttU_Net(img_ch=3, output_ch=1)
         elif self.model_type == 'R2AttU_Net':
             self.unet = R2AttU_Net(img_ch=3, output_ch=1, t=self.t)
+        else:
+            self.unet = smp.Unet(encoder_name="timm-efficientnet-b3",
+                                 encoder_weights="advprop",    
+                                 in_channels=3,                  
+                                 classes=1)
 
         # self.optimizer = optim.Adam(list(self.unet.parameters()),
         #                             self.lr, [self.beta1, self.beta2])
         # print([n for n, p in self.unet.named_parameters()])
-        no_decay = ['bn', 'bias']
-        grouped_parameters = [
-            {'params': [p for n, p in self.unet.named_parameters() if not any(
-                nd in n for nd in no_decay)], 'weight_decay': 1e-2},
-            {'params': [p for n, p in self.unet.named_parameters() if any(
-                nd in n for nd in no_decay)], 'weight_decay': 0.0}
-        ]
-        self.optimizer = optim.AdamW(grouped_parameters, self.lr, eps=1e-6)
+        # no_decay = ['bn', 'bias']
+        # grouped_parameters = [
+        #     {'params': [p for n, p in self.unet.named_parameters() if not any(
+        #         nd in n for nd in no_decay)], 'weight_decay': 1e-2},
+        #     {'params': [p for n, p in self.unet.named_parameters() if any(
+        #         nd in n for nd in no_decay)], 'weight_decay': 0.0}
+        # ]
+        self.optimizer = optim.Adam(self.unet.parameters(), self.lr)
         # self.scheduler = get_cosine_schedule_with_warmup(
         #     self.optimizer, self.warmup_steps, self.num_total_steps)
         self.scheduler = lr_scheduler.ReduceLROnPlateau(self.optimizer, factor=0.1, patience=20, verbose=True)
         self.unet.to(self.device)
         wandb.watch(self.unet)
-        # self.print_network(self.unet, self.model_type)
+        self.print_network(self.unet, self.model_type)
 
     def print_network(self, model, name):
         """Print out the network information."""
         num_params = 0
         for p in model.parameters():
             num_params += p.numel()
-        print(model)
+        # print(model)
         print(name)
         print("The number of parameters: {}".format(num_params))
 

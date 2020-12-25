@@ -17,10 +17,10 @@ def main(config):
         torch.manual_seed(config.seed)
         torch.cuda.manual_seed_all(config.seed)
     
-    if config.model_type not in ['U_Net', 'R2U_Net', 'AttU_Net', 'R2AttU_Net']:
-        print('ERROR!! model_type should be selected in U_Net/R2U_Net/AttU_Net/R2AttU_Net')
-        print('Your input for model_type was %s' % config.model_type)
-        return
+    # if config.model_type not in ['U_Net', 'R2U_Net', 'AttU_Net', 'R2AttU_Net']:
+    #     print('ERROR!! model_type should be selected in U_Net/R2U_Net/AttU_Net/R2AttU_Net')
+    #     print('Your input for model_type was %s' % config.model_type)
+    #     return
 
     # Create directories if not exist
     if not os.path.exists(config.model_path):
