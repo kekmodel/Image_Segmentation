@@ -70,18 +70,18 @@ class Solver(object):
         elif self.model_type == 'R2AttU_Net':
             self.unet = R2AttU_Net(img_ch=3, output_ch=1, t=self.t)
 
-        self.optimizer = optim.Adam(list(self.unet.parameters()),
-                                    self.lr, [self.beta1, self.beta2])
-        # no_decay = ['bn', 'bias']
-        # grouped_parameters = [
-        #     {'params': [p for n, p in self.unet.named_parameters() if not any(
-        #         nd in n for nd in no_decay)], 'weight_decay': 1e-2},
-        #     {'params': [p for n, p in self.unet.named_parameters() if any(
-        #         nd in n for nd in no_decay)], 'weight_decay': 0.0}
-        # ]
-        # self.optimizer = optim.AdamW(grouped_parameters, self.lr, eps=1e-6)
-        # self.scheduler = get_cosine_schedule_with_warmup(
-        #     self.optimizer, self.warmup_steps, self.num_total_steps)
+        # self.optimizer = optim.Adam(list(self.unet.parameters()),
+        #                             self.lr, [self.beta1, self.beta2])
+        no_decay = ['bn', 'bias']
+        grouped_parameters = [
+            {'params': [p for n, p in self.unet.named_parameters() if not any(
+                nd in n for nd in no_decay)], 'weight_decay': 1e-2},
+            {'params': [p for n, p in self.unet.named_parameters() if any(
+                nd in n for nd in no_decay)], 'weight_decay': 0.0}
+        ]
+        self.optimizer = optim.AdamW(grouped_parameters, self.lr, eps=1e-6)
+        self.scheduler = get_cosine_schedule_with_warmup(
+            self.optimizer, self.warmup_steps, self.num_total_steps)
         self.unet.to(self.device)
         wandb.watch(self.unet)
         # self.print_network(self.unet, self.model_type)
@@ -171,6 +171,7 @@ class Solver(object):
                     self.reset_grad()
                     loss.backward()
                     self.optimizer.step()
+                    self.scheduler.step()
 
                     acc += get_accuracy(SR, GT)
                     SE += get_sensitivity(SR, GT)
