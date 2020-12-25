@@ -35,7 +35,7 @@ class conv_block(nn.Module):
         self.conv1 = nn.Conv2d(ch_in, ch_out, kernel_size=3, stride=1, padding=1, bias=True)
         self.bn1 = nn.BatchNorm2d(ch_out)
         self.relu = nn.ReLU(inplace=True)
-        self.conv2 = nn.Conv2d(ch_in, ch_out, kernel_size=3, stride=1, padding=1, bias=True)
+        self.conv2 = nn.Conv2d(ch_out, ch_out, kernel_size=3, stride=1, padding=1, bias=True)
         self.bn2 = nn.BatchNorm2d(ch_out)
 
     def forward(self, x):
