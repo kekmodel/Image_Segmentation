@@ -69,7 +69,7 @@ class Recurrent_block(nn.Module):
         super(Recurrent_block, self).__init__()
         self.t = t
         self.ch_out = ch_out
-        self.conv = nn.Conv2d(ch_in, ch_out, kernel_size=3, stride=1, padding=1, bias=True)
+        self.conv = nn.Conv2d(ch_out, ch_out, kernel_size=3, stride=1, padding=1, bias=True)
         self.bn = nn.BatchNorm2d(ch_out)
         self.relu = nn.ReLU(inplace=True)
 
