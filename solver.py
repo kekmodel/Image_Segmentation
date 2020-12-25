@@ -289,7 +289,7 @@ class Solver(object):
             self.unet.load_state_dict(torch.load(unet_path))
 
             self.unet.eval()
-            with torch.no_grad()
+            with torch.no_grad():
                 acc = 0.  # Accuracy
                 SE = 0.		# Sensitivity (Recall)
                 SP = 0.		# Specificity
