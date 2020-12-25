@@ -73,8 +73,8 @@ class Solver(object):
         elif self.model_type == 'R2AttU_Net':
             self.unet = R2AttU_Net(img_ch=3, output_ch=1, t=self.t)
         else:
-            self.unet = smp.Unet(encoder_name="timm-efficientnet-b3",
-                                 encoder_weights="advprop",    
+            self.unet = smp.Unet(encoder_name="timm-resnest50d",
+                                 encoder_weights="imagenet",    
                                  in_channels=3,                  
                                  classes=1)
 
