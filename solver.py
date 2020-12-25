@@ -74,7 +74,8 @@ class Solver(object):
             self.unet = R2AttU_Net(img_ch=3, output_ch=1, t=self.t)
         else:
             self.unet = smp.Unet(encoder_name="timm-resnest26d",
-                                 encoder_weights="imagenet",    
+                                 encoder_weights="imagenet",
+                                 decoder_use_batchnorm=False,  
                                  in_channels=3,                  
                                  classes=1)
 
@@ -155,7 +156,7 @@ class Solver(object):
 
             for epoch in range(self.num_epochs):
 
-                self.unet.train()
+                self.unet.eval()
                 epoch_loss = 0
 
                 acc = 0.  # Accuracy
