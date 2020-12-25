@@ -190,8 +190,7 @@ class Solver(object):
                     JS += get_JS(SR, GT)
                     DC += get_DC(SR, GT)
                     length += images.size(0)
-                    wandb.log({"loss/step": loss.item(),
-                               "lr": self.get_lr()})
+                    wandb.log({"lr": self.get_lr()})
 
                 acc = acc/length
                 SE = SE/length
@@ -226,6 +225,7 @@ class Solver(object):
                 # self.unet.train(False)
                 self.unet.eval()
                 with torch.no_grad():
+                    epoch_loss = 0.
                     acc = 0.  # Accuracy
                     SE = 0.		# Sensitivity (Recall)
                     SP = 0.		# Specificity
@@ -238,6 +238,10 @@ class Solver(object):
                         images = images.to(self.device)
                         GT = GT.to(self.device)
                         SR = torch.sigmoid(self.unet(images))
+                        SR_flat = SR.view(SR.size(0), -1)
+                        GT_flat = GT.view(GT.size(0), -1)
+                        loss = self.dice_loss(SR_flat, GT_flat)
+                        epoch_loss += loss.item()
                         acc += get_accuracy(SR, GT)
                         SE += get_sensitivity(SR, GT)
                         SP += get_specificity(SR, GT)
@@ -256,17 +260,18 @@ class Solver(object):
                     JS = JS/length
                     DC = DC/length
                     unet_score = DC
-                    self.scheduler.step(unet_score)
+                    self.scheduler.step(epoch_loss/(i+1))
 
                     print('[Validation] Acc: %.4f, SE: %.4f, SP: %.4f, PC: %.4f, F1: %.4f, JS: %.4f, DC: %.4f' % (
                         acc, SE, SP, PC, F1, JS, DC))
-                    wandb.log({"val/acc": acc,
-                            "val/sens": SE,
-                            "val/spec": SP,
-                            "val/prec": PC,
-                            "val/f1": F1,
-                            "val/jacc": JS,
-                            "val/dice": DC})
+                    wandb.log({"loss/epoch_val": epoch_loss/(i+1),
+                               "val/acc": acc,
+                               "val/sens": SE,
+                               "val/spec": SP,
+                               "val/prec": PC,
+                               "val/f1": F1,
+                               "val/jacc": JS,
+                               "val/dice": DC})
 
                     '''
                     torchvision.utils.save_image(images.data.cpu(),
