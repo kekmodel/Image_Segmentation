@@ -35,8 +35,8 @@ class Solver(object):
 
         # Hyper-parameters
         self.lr = config.lr
-        self.beta1 = config.beta1
-        self.beta2 = config.beta2
+        # self.beta1 = config.beta1
+        # self.beta2 = config.beta2
 
         # Training settings
         self.num_epochs = config.num_epochs
