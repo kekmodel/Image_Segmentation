@@ -5,7 +5,7 @@ import torch
 
 
 def get_accuracy(SR, GT, threshold=0.5):
-    SR = SR > threshold
+    SR = SR >= threshold
     GT = GT == torch.max(GT)
     corr = torch.sum(SR == GT)
     tensor_size = SR.size(0)*SR.size(1)*SR.size(2)*SR.size(3)
@@ -16,7 +16,7 @@ def get_accuracy(SR, GT, threshold=0.5):
 
 def get_sensitivity(SR, GT, threshold=0.5):
     # Sensitivity == Recall
-    SR = SR > threshold
+    SR = SR >= threshold
     GT = GT == torch.max(GT)
 
     # TP : True Positive
@@ -30,7 +30,7 @@ def get_sensitivity(SR, GT, threshold=0.5):
 
 
 def get_specificity(SR, GT, threshold=0.5):
-    SR = SR > threshold
+    SR = SR >= threshold
     GT = GT == torch.max(GT)
 
     # TN : True Negative
@@ -44,7 +44,7 @@ def get_specificity(SR, GT, threshold=0.5):
 
 
 def get_precision(SR, GT, threshold=0.5):
-    SR = SR > threshold
+    SR = SR >= threshold
     GT = GT == torch.max(GT)
 
     # TP : True Positive
@@ -69,7 +69,7 @@ def get_F1(SR, GT, threshold=0.5):
 
 def get_JS(SR, GT, threshold=0.5):
     # JS : Jaccard similarity
-    SR = SR > threshold
+    SR = SR >= threshold
     GT = GT == torch.max(GT)
 
     Inter = torch.sum((SR.long()+GT.long()) == 2)
@@ -82,10 +82,10 @@ def get_JS(SR, GT, threshold=0.5):
 
 def get_DC(SR, GT, threshold=0.5):
     # DC : Dice Coefficient
-    SR = SR > threshold
-    GT = GT == torch.max(GT)
-
-    Inter = torch.sum((SR.long()+GT.long()) == 2)
-    DC = float(2*Inter)/(float(torch.sum(SR)+torch.sum(GT)) + 1e-6)
-
-    return DC
+    with torch.no_grad():
+        SR = SR >= threshold
+        GT = GT == torch.max(GT)
+        Inter = torch.sum((SR.long()+GT.long()) == 2, dim=-1)
+        DC = 2.0 * Inter / (torch.sum(SR, dim=-1) + torch.sum(GT, dim=-1)).float()
+        DC = DC.mean()    
+    return DC.item()

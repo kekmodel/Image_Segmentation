@@ -1,6 +1,7 @@
 import os
 import random
 from random import shuffle
+import albumentations
 import numpy as np
 import torch
 from torch.utils import data
@@ -87,7 +88,8 @@ class ImageFolder(data.Dataset):
         image = Transform(image)
         GT = Transform(GT)
 
-        Norm_ = T.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))
+        # Norm_ = T.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))
+        Norm_ = T.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
         image = Norm_(image)
 
         return image, GT

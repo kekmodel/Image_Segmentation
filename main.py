@@ -1,7 +1,7 @@
 import argparse
 import os
 from solver import Solver
-from data_loader import get_loader
+from data_loader_test import get_loader
 from torch.backends import cudnn
 import random
 import numpy as np
@@ -89,7 +89,7 @@ if __name__ == '__main__':
     parser.add_argument('--name', type=str, default='test')
     # parser.add_argument('--num_epochs_decay', type=int, default=70)
     parser.add_argument('--batch_size', type=int, default=1)
-    parser.add_argument('--num_workers', type=int, default=4)
+    parser.add_argument('--num_workers', type=int, default=2)
     parser.add_argument('--lr', type=float, default=0.0003)
     # parser.add_argument('--beta1', type=float, default=0.5)        # momentum1 in Adam
     # parser.add_argument('--beta2', type=float, default=0.999)      # momentum2 in Adam
